@@ -2,11 +2,8 @@
 ;; this file only exist for people wanting to use shadow-cljs
 ;; via a :local/root or git sha via deps.edn
 ;;
-;; you must compile some files in the project by running lein
-;; otherwise it won't actually work
-
-;; required java classes need to be compiled
-;;   lein javac
+;; Git and local consumers compile the required Java classes through the
+;; standard Clojure CLI prep-lib boundary below.
 
 ;; if you intend to use the shadow-cljs UI
 ;;   lein run -m shadow.cljs.devtools.cli release ui
@@ -65,8 +62,15 @@
 
   com.bhauman/cljs-test-display {:mvn/version "0.1.1"}}
 
+ :deps/prep-lib {:ensure "target/classes"
+                 :alias :build
+                 :fn compile-java}
+
  :aliases
- {:dev
+ {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
+          :ns-default build}
+
+  :dev
   {:extra-paths
    ["src/test"]
 
