@@ -25,4 +25,5 @@
                      (filter requested)
                      set)]
     {:requested-exact (count requested)
-     :matched-exact (count matched)}))
+     :matched-exact (count matched)
+     :all-exact-matched? (= requested matched)}))

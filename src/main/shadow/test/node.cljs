@@ -73,13 +73,17 @@
 
       (seq test-syms)
       (let [test-vars (vec (find-matching-test-vars test-syms))
-            {:keys [requested-exact matched-exact]}
+            {:keys [requested-exact matched-exact all-exact-matched?]}
             (node-util/exact-selection-counts test-vars test-syms)]
-        (println (str "SEON-TEST-SELECTION"
+        (println (str "SHADOW-TEST-SELECTION"
                       " requested-exact=" requested-exact
                       " matched-exact=" matched-exact
                       " selected-vars=" (count test-vars)))
-        (st/run-test-vars test-env test-vars))
+        (if all-exact-matched?
+          (st/run-test-vars test-env test-vars)
+          (do
+            (println "Every requested exact test var must match a registered test.")
+            (js/process.exit 1))))
 
       :else
       (st/run-all-tests test-env nil)

@@ -14,9 +14,13 @@
                         (range 10))]
     (is (= test-vars
            (vec (node-util/find-matching-test-vars test-vars selectors))))
-    (is (= {:requested-exact 10 :matched-exact 10}
+    (is (= {:requested-exact 10
+            :matched-exact 10
+            :all-exact-matched? true}
            (node-util/exact-selection-counts test-vars selectors)))
-    (is (= {:requested-exact 11 :matched-exact 10}
+    (is (= {:requested-exact 11
+            :matched-exact 10
+            :all-exact-matched? false}
            (node-util/exact-selection-counts
              test-vars
              (conj selectors 'shadow.test.node-test/not-registered))))))
