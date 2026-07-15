@@ -2,6 +2,7 @@
   {:dev/always true}
   (:require
     [shadow.test.env :as env]
+    [shadow.test.node-util :as node-util]
     [cljs.test :as ct]
     [shadow.test :as st]
     [clojure.string :as str]))
@@ -42,18 +43,7 @@
     args))
 
 (defn find-matching-test-vars [test-syms]
-  ;; FIXME: should have some kind of wildcard support
-  (let [test-namespaces
-        (->> test-syms (filter simple-symbol?) (set))
-        test-var-syms
-        (->> test-syms (filter qualified-symbol?) (set))]
-
-    (->> (env/get-test-vars)
-         (filter (fn [the-var]
-                   (let [{:keys [name ns]} (meta the-var)]
-                     (or (contains? test-namespaces ns)
-                         (contains? test-var-syms (symbol ns name))))))
-         )))
+  (node-util/find-matching-test-vars (env/get-test-vars) test-syms))
 
 (defn execute-cli [{:keys [test-syms help list] :as opts}]
   (let [test-env
