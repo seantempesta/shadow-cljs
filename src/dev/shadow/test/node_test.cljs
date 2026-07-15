@@ -13,4 +13,10 @@
         selectors (mapv #(symbol (str "shadow.test.node-test/selected-" %))
                         (range 10))]
     (is (= test-vars
-           (vec (node-util/find-matching-test-vars test-vars selectors))))))
+           (vec (node-util/find-matching-test-vars test-vars selectors))))
+    (is (= {:requested-exact 10 :matched-exact 10}
+           (node-util/exact-selection-counts test-vars selectors)))
+    (is (= {:requested-exact 11 :matched-exact 10}
+           (node-util/exact-selection-counts
+             test-vars
+             (conj selectors 'shadow.test.node-test/not-registered))))))

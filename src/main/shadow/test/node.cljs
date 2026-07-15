@@ -72,7 +72,13 @@
         (println "---------------------------------"))
 
       (seq test-syms)
-      (let [test-vars (find-matching-test-vars test-syms)]
+      (let [test-vars (vec (find-matching-test-vars test-syms))
+            {:keys [requested-exact matched-exact]}
+            (node-util/exact-selection-counts test-vars test-syms)]
+        (println (str "SEON-TEST-SELECTION"
+                      " requested-exact=" requested-exact
+                      " matched-exact=" matched-exact
+                      " selected-vars=" (count test-vars)))
         (st/run-test-vars test-env test-vars))
 
       :else
