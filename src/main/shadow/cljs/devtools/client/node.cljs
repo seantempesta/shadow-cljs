@@ -20,11 +20,11 @@
   (js/SHADOW_IMPORT src))
 
 (defn handle-build-complete
-  [runtime {:keys [info reload-info] :as msg}]
+  [runtime {:keys [info reload-info] :as msg} complete-fn failure-fn]
   (let [{:keys [sources compiled warnings]} info]
 
-    (when (and env/autoload
-               (or (empty? warnings) env/ignore-warnings))
+    (if (and env/autoload
+             (or (empty? warnings) env/ignore-warnings))
 
       (let [files-to-require
             (->> sources
@@ -36,14 +36,23 @@
                  (map :output-name)
                  (into []))]
 
-        (when (seq files-to-require)
+        (if (seq files-to-require)
           (env/do-js-reload
             msg
             (fn [next]
               (doseq [src files-to-require]
                 (env/before-load-src src)
                 (closure-import src))
-              (next))))))))
+              (next))
+            #(complete-fn msg)
+            (fn [error _task remaining-tasks]
+              (failure-fn
+                (assoc msg
+                       ::reload-error (str error)
+                       ::reload-remaining-task-count
+                       (count remaining-tasks)))))
+          (complete-fn msg)))
+      (complete-fn msg))))
 
 (def client-info
   {:host :node
@@ -163,8 +172,11 @@
             (fn [msg]
               ;; (js/console.log "cljs-build-complete" msg)
               (let [msg (env/add-warnings-to-info msg)]
-                (handle-build-complete runtime msg)
-                (env/run-custom-notify! (assoc msg :type :build-complete))))
+                (handle-build-complete
+                  runtime
+                  msg
+                  #(env/run-custom-notify! (assoc % :type :build-complete))
+                  #(env/run-custom-notify! (assoc % :type :build-failure)))))
 
             :cljs-build-failure
             (fn [msg]
