@@ -22,6 +22,11 @@
   (do-repl-require [this require-msg done error])
   (do-invoke [this ns invoke-msg success fail]))
 
+(defn- reconnect-delay-ms
+  "Bounded delay before reconnecting a development runtime websocket."
+  [_failed-attempts]
+  5000)
+
 (defn load-sources [runtime sources callback]
   (shared/call runtime
     {:op :cljs-load-sources
@@ -320,10 +325,11 @@
     ;; (js/console.log "runtime remote-close" @state-ref e)
     (swap! state-ref dissoc ::ws-connected ::ws-connecting)
 
-    ;; after 3 failed attempts just stop
-    (if (>= 3 (::ws-errors @state-ref))
-      (.schedule-connect! this 5000)
-      (js/console.warn "shadow-cljs: giving up trying to connect to " info)))
+    ;; A watcher may be unavailable for an arbitrarily long rebuild or host
+    ;; sleep. The runtime is still healthy and must remain discoverable once
+    ;; the watcher returns, so keep reconnecting at one bounded cadence rather
+    ;; than permanently stranding the live process after four socket errors.
+    (.schedule-connect! this (reconnect-delay-ms (::ws-errors @state-ref))))
 
   (remote-error [this e]
     (swap! state-ref update ::ws-errors inc)
@@ -557,4 +563,3 @@
 
     ;; (js/console.log "first connect from init-runtime!")
     (.attempt-connect! runtime)))
-
